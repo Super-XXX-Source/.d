@@ -1,0 +1,181 @@
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+
+local function createRoundedSquareMenu()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Parent = ScreenGui
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Visible = true
+
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0.1, 0)
+    MainCorner.Parent = MainFrame
+
+    local Title = Instance.new("TextLabel")
+    Title.Parent = MainFrame
+    Title.Size = UDim2.new(1, 0, 0, 45)
+    Title.Position = UDim2.new(0, 0, 0, 5)
+    Title.BackgroundTransparency = 1
+    Title.Text = "Blue Lock Supra Script"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.SourceSansBold
+    Title.TextSize = 18
+    Title.TextXAlignment = Enum.TextXAlignment.Center
+
+    local buttons = {
+        {text = "( fast running ) ركض سريع", scriptUrl = "https://pastefy.app/FA0c6lK8/raw"},
+        {text = "طاقة لا نهائية (Infinite stamina)", scriptUrl = "https://pastefy.app/YCQ6YG6j/raw"},
+        {text = "جلب الكره (Bring Ball)", scriptUrl = "https://pastefy.app/hGkYKsBy/raw"},
+        {text = "أوتو أقوال (Auto Goal)", customScript = true}
+    }
+
+    local buttonSize = 50
+    local spacing = 10
+
+    for i, button in ipairs(buttons) do
+        local Btn = Instance.new("TextButton")
+        Btn.Parent = MainFrame
+        Btn.Size = UDim2.new(0.8, 0, 0, buttonSize)
+        Btn.Position = UDim2.new(0.5, 0, 0, (50 + (i - 1) * (buttonSize + spacing)) + 20)
+        Btn.AnchorPoint = Vector2.new(0.5, 0)
+        Btn.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
+        Btn.Text = button.text
+        Btn.Font = Enum.Font.SourceSansBold
+        Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Btn.TextSize = 14
+        Btn.TextXAlignment = Enum.TextXAlignment.Center
+
+        local BtnCorner = Instance.new("UICorner")
+        BtnCorner.CornerRadius = UDim.new(0.2, 0)
+        BtnCorner.Parent = Btn
+
+        local BtnStroke = Instance.new("UIStroke", Btn)
+        BtnStroke.Thickness = 2
+        BtnStroke.Color = Color3.fromRGB(139, 0, 0)
+
+        Btn.MouseButton1Click:Connect(function()
+            if button.customScript then
+                local players = game:GetService("Players")
+                local player = players.LocalPlayer
+                local replicatedStorage = game:GetService("ReplicatedStorage")
+
+                local isAutoGoalEnabled = false
+
+                local function AutoGoal()
+                    local character = player.Character or player.CharacterAdded:Wait()
+                    local football = workspace:FindFirstChild("Football")
+
+                    if football then
+                        while isAutoGoalEnabled do
+                            if character:FindFirstChild("Football") then
+                                local goalPosition
+                                if player.Team.Name == "Away" then
+                                    goalPosition = workspace.Goals.Away.CFrame
+                                elseif player.Team.Name == "Home" then
+                                    goalPosition = workspace.Goals.Home.CFrame
+                                end
+
+                                if goalPosition then
+                                    character:SetPrimaryPartCFrame(goalPosition)
+                                    wait(0.1)
+                                    local args = {
+                                        [1] = 30,
+                                        [4] = Vector3.new(0, 0, 0)
+                                    }
+                                    replicatedStorage.Packages.Knit.Services.BallService.RE.Shoot:FireServer(unpack(args))
+                                end
+
+                                wait(1)
+                            else
+                                wait(0.5)
+                            end
+                        end
+                    end
+                end
+
+                local function toggleAutoGoal(value)
+                    isAutoGoalEnabled = value
+                    if isAutoGoalEnabled then
+                        AutoGoal()
+                    end
+                end
+
+                toggleAutoGoal(true)
+            else
+                loadstring(game:HttpGet(button.scriptUrl))()
+            end
+        end)
+    end
+
+    local SHOWHIDEBUTTON = Instance.new("TextButton")
+    SHOWHIDEBUTTON.Parent = ScreenGui
+    SHOWHIDEBUTTON.Size = UDim2.new(0.1, 0, 0.06, 0)
+    SHOWHIDEBUTTON.Position = UDim2.new(0, 10, 1, -70)
+    SHOWHIDEBUTTON.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    SHOWHIDEBUTTON.Text = "SHOW/HIDE"
+    SHOWHIDEBUTTON.Font = Enum.Font.SourceSansBold
+    SHOWHIDEBUTTON.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SHOWHIDEBUTTON.TextSize = 16
+    SHOWHIDEBUTTON.TextXAlignment = Enum.TextXAlignment.Center
+
+    local SHOWHIDECorner = Instance.new("UICorner", SHOWHIDEBUTTON)
+    SHOWHIDECorner.CornerRadius = UDim.new(0.2, 0)
+
+    local SHOWHIDESTROKE = Instance.new("UIStroke", SHOWHIDEBUTTON)
+    SHOWHIDESTROKE.Thickness = 2
+    SHOWHIDESTROKE.Color = Color3.fromRGB(255, 255, 255)
+
+    local isMenuVisible = true
+
+    SHOWHIDEBUTTON.MouseButton1Click:Connect(function()
+        if isMenuVisible then
+            MainFrame.Visible = false
+            isMenuVisible = false
+        else
+            MainFrame.Visible = true
+            isMenuVisible = true
+        end
+    end)
+
+    local dragging = false
+    local startPos = nil
+    local inputPos = nil
+
+    MainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            startPos = input.Position - MainFrame.Position.Offset
+        end
+    end)
+
+    MainFrame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            inputPos = input.Position
+            MainFrame.Position = UDim2.new(0, inputPos.X - startPos.X, 0, inputPos.Y - startPos.Y)
+        end
+    end)
+end
+
+createRoundedSquareMenu()
+
+
+
+local args = {
+    [1] = "Cosmetics", -- نوع العنصر
+    [2] = "SHADOW"    -- اسم العنصر
+}
+
+-- استدعاء الخدمه
+game:GetService("ReplicatedStorage").Packages.Knit.Services.CustomizationService.RE.Customize:FireServer(unpack(args))
